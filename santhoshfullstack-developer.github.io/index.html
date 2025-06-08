@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Nutrition Check</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      background: #f0f4f8;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 { color: #2c3e50; }
+    label, select, input { display: block; margin-top: 10px; }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .output {
+      margin-top: 30px;
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .meal-time {
+      color: #3498db;
+      font-weight: bold;
+    }
+    .checkbox-container {
+      margin: 15px 0;
+    }
+    .checkbox-container label {
+      display: inline;
+      margin-left: 8px;
+    }
+    .hidden {
+      display: none;
+    }
+    .allergy-section {
+      background: #fff3e0;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .condition-details {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .congrats {
+      color: #27ae60;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    .lifestyle-tip {
+      background: #e8f5e9;
+      padding: 10px;
+      border-left: 4px solid #27ae60;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Complete Nutrition Check – Personalized Diet & Lifestyle Plan</h1>
+
+  <label for="age">Age:</label>
+  <input type="number" id="age" min="1" max="120" required />
+
+  <label for="weight">Weight (kg):</label>
+  <input type="number" id="weight" min="20" max="300" step="0.1" required />
+
+  <label for="height">Height (cm):</label>
+  <input type="number" id="height" min="100" max="250" required />
+
+  <label for="condition">Health Condition:</label>
+  <select id="condition" onchange="showConditionDetails()">
+    <option value="none">None (Healthy)</option>
+    <option value="bp">BP Patient</option>
+    <option value="diabetic">Diabetic</option>
+    <option value="pregnant">Pregnant Woman</option>
+    <option value="child">Child (15–17)</option>
+    <option value="elderly">Elderly (56+)</option>
+  </select>
+
+  <div id="diabetic-details" class="condition-details hidden">
+    <label for="diabetes-type">Type of Diabetes:</label>
+    <select id="diabetes-type">
+      <option value="type1">Type 1</option>
+      <option value="type2">Type 2</option>
+      <option value="gestational">Gestational</option>
+      <option value="prediabetic">Pre-diabetic</option>
+    </select>
+    
+    <label for="sugar-level">Average Blood Sugar Level (mg/dL):</label>
+    <input type="number" id="sugar-level" min="50" max="300" placeholder="e.g., 120" />
+  </div>
+
+  <div id="bp-details" class="condition-details hidden">
+    <label for="bp-level">Blood Pressure Level:</label>
+    <select id="bp-level">
+      <option value="mild">Mild (130-139/80-89)</option>
+      <option value="moderate">Moderate (140-159/90-99)</option>
+      <option value="severe">Severe (160+/100+)</option>
+    </select>
+  </div>
+
+  <div class="checkbox-container">
+    <input type="checkbox" id="gym" />
+    <label for="gym">Do you go to gym/workout regularly?</label>
+  </div>
+
+  <div class="checkbox-container">
+    <input type="checkbox" id="buildBody" />
+    <label for="buildBody">Do you want to build muscle?</label>
+  </div>
+
+  <div class="checkbox-container">
+    <input type="checkbox" id="allergies" onchange="toggleAllergyInput()" />
+    <label for="allergies">Do you have any food allergies?</label>
+  </div>
+
+  <div id="allergy-input" class="allergy-section hidden">
+    <label>Select your food allergies:</label>
+    <div style="columns: 2;">
+      <div><input type="checkbox" id="allergy-dairy"> <label for="allergy-dairy">Dairy</label></div>
+      <div><input type="checkbox" id="allergy-eggs"> <label for="allergy-eggs">Eggs</label></div>
+      <div><input type="checkbox" id="allergy-nuts"> <label for="allergy-nuts">Nuts</label></div>
+      <div><input type="checkbox" id="allergy-peanuts"> <label for="allergy-peanuts">Peanuts</label></div>
+      <div><input type="checkbox" id="allergy-wheat"> <label for="allergy-wheat">Wheat/Gluten</label></div>
+      <div><input type="checkbox" id="allergy-soy"> <label for="allergy-soy">Soy</label></div>
+      <div><input type="checkbox" id="allergy-fish"> <label for="allergy-fish">Fish</label></div>
+      <div><input type="checkbox" id="allergy-shellfish"> <label for="allergy-shellfish">Shellfish</label></div>
+    </div>
+    <label for="other-allergies" style="margin-top: 10px;">Other allergies (specify):</label>
+    <input type="text" id="other-allergies" placeholder="e.g., strawberries, sesame">
+  </div>
+
+  <button onclick="generatePlan()">Get My Personalized Plan</button>
+
+  <div class="output" id="result"></div>
+
+  <script>
+    function showConditionDetails() {
+      const condition = document.getElementById('condition').value;
+      document.getElementById('diabetic-details').classList.add('hidden');
+      document.getElementById('bp-details').classList.add('hidden');
+      
+      if (condition === 'diabetic') {
+        document.getElementById('diabetic-details').classList.remove('hidden');
+      } else if (condition === 'bp') {
+        document.getElementById('bp-details').classList.remove('hidden');
+      }
+    }
+
+    function toggleAllergyInput() {
+      const allergyCheckbox = document.getElementById('allergies');
+      const allergyInput = document.getElementById('allergy-input');
+      
+      if (allergyCheckbox.checked) {
+        allergyInput.classList.remove('hidden');
+      } else {
+        allergyInput.classList.add('hidden');
+      }
+    }
+
+    function getSelectedAllergies() {
+      const allergies = [];
+      if (document.getElementById('allergy-dairy').checked) allergies.push('dairy');
+      if (document.getElementById('allergy-eggs').checked) allergies.push('eggs');
+      if (document.getElementById('allergy-nuts').checked) allergies.push('nuts');
+      if (document.getElementById('allergy-peanuts').checked) allergies.push('peanuts');
+      if (document.getElementById('allergy-wheat').checked) allergies.push('wheat/gluten');
+      if (document.getElementById('allergy-soy').checked) allergies.push('soy');
+      if (document.getElementById('allergy-fish').checked) allergies.push('fish');
+      if (document.getElementById('allergy-shellfish').checked) allergies.push('shellfish');
+      
+      const otherAllergies = document.getElementById('other-allergies').value;
+      if (otherAllergies) {
+        allergies.push(...otherAllergies.split(',').map(a => a.trim().toLowerCase()));
+      }
+      
+      return allergies;
+    }
+
+    function filterAllergicFoods(plan, allergies) {
+      if (allergies.length === 0) return plan;
+      
+      // Create substitutions for common allergies
+      const substitutions = {
+        'dairy': ['almond milk', 'soy milk', 'coconut yogurt'],
+        'eggs': ['tofu scramble', 'chia seed eggs', 'banana in baking'],
+        'nuts': ['sunflower seeds', 'pumpkin seeds', 'roasted chickpeas'],
+        'peanuts': ['sunflower seed butter', 'soy nuts'],
+        'wheat/gluten': ['quinoa', 'buckwheat', 'rice'],
+        'soy': ['lentils', 'chickpeas', 'other legumes'],
+        'fish': ['tofu', 'tempeh', 'chicken'],
+        'shellfish': ['fish', 'chicken', 'tofu']
+      };
+      
+      let filteredPlan = plan;
+      
+      allergies.forEach(allergen => {
+        // Remove allergic foods
+        const regex = new RegExp('\\b' + allergen + '\\b', 'gi');
+        filteredPlan = filteredPlan.replace(regex, '[REMOVED]');
+        
+        // Add substitution suggestions
+        if (substitutions[allergen]) {
+          filteredPlan += `<p><i>Note: For ${allergen} allergy, try ${substitutions[allergen].join(' or ')} instead.</i></p>`;
+        }
+      });
+      
+      return filteredPlan;
+    }
+
+    function generatePlan() {
+      const age = parseInt(document.getElementById('age').value);
+      const weight = parseFloat(document.getElementById('weight').value);
+      const height = parseFloat(document.getElementById('height').value);
+      const condition = document.getElementById('condition').value;
+      const gym = document.getElementById('gym').checked;
+      const buildBody = document.getElementById('buildBody').checked;
+      const hasAllergies = document.getElementById('allergies').checked;
+      const allergies = hasAllergies ? getSelectedAllergies() : [];
+      
+      // Condition-specific details
+      const diabetesType = condition === 'diabetic' ? document.getElementById('diabetes-type').value : '';
+      const sugarLevel = condition === 'diabetic' ? parseInt(document.getElementById('sugar-level').value || 120) : 0;
+      const bpLevel = condition === 'bp' ? document.getElementById('bp-level').value : '';
+
+      if (!age || !weight || !height) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+
+      const heightInM = height / 100;
+      const bmi = (weight / (heightInM * heightInM)).toFixed(1);
+      let status = "";
+
+      if (bmi < 18.5) status = "Underweight";
+      else if (bmi < 25) status = "Healthy weight";
+      else if (bmi < 30) status = "Overweight";
+      else status = "Obese";
+
+      let plan = "", tips = "", workoutAdvice = "", congrats = "";
+      const lifestyleTips = [];
+
+      // Healthy user congratulations and general advice
+      if (condition === "none" && bmi >= 18.5 && bmi < 25) {
+        congrats = `<p class="congrats">🎉 Congratulations! You're at a healthy weight with no reported conditions. Keep up the good work!</p>`;
+        lifestyleTips.push(
+          "Maintain your healthy habits with balanced nutrition and regular exercise",
+          "Limit processed foods and sugary drinks to maintain your health",
+          "Ensure you're getting 7-9 hours of quality sleep each night",
+          "Practice stress management techniques like meditation or yoga",
+          "Stay hydrated with at least 2 liters of water daily"
+        );
+      } else if (condition === "none") {
+        lifestyleTips.push(
+          "Reduce screen time, especially before bedtime for better sleep",
+          "Limit junk food and opt for whole, unprocessed foods",
+          "Include at least 30 minutes of physical activity daily",
+          "Practice mindful eating - eat slowly and without distractions",
+          "Stay hydrated and limit sugary beverages"
+        );
+      }
+
+      // Base diet plan for general health
+      if (buildBody || gym) {
+        // Bodybuilding/gym diet plans by age
+        if (age < 18) {
+          plan = `
+            <p><span class="meal-time">7:00 AM (Pre-workout):</span> Banana + handful of almonds</p>
+            <p><span class="meal-time">8:00 AM (Post-workout):</span> Scrambled eggs (2 whole + 2 whites) + whole wheat toast + milk</p>
+            <p><span class="meal-time">11:00 AM:</span> Peanut butter sandwich + fruit</p>
+            <p><span class="meal-time">2:00 PM:</span> Chicken/fish + brown rice + vegetables</p>
+            <p><span class="meal-time">5:00 PM:</span> Yogurt with nuts and honey</p>
+            <p><span class="meal-time">8:00 PM:</span> Dal + roti + paneer/egg + salad</p>
+            <p><span class="meal-time">10:00 PM:</span> Glass of milk</p>
+          `;
+          tips = "Focus on proper form over heavy weights. Get plenty of sleep for growth.";
+          workoutAdvice = "3-4 days/week full-body workouts. Include bodyweight exercises.";
+        } 
+        else if (age >= 18 && age <= 35) {
+          plan = `
+            <p><span class="meal-time">6:30 AM (Pre-workout):</span> Banana + whey protein shake</p>
+            <p><span class="meal-time">8:00 AM (Post-workout):</span> 4 egg whites + oats + nuts</p>
+            <p><span class="meal-time">11:00 AM:</span> Grilled chicken + sweet potato + vegetables</p>
+            <p><span class="meal-time">2:00 PM:</span> Brown rice + dal + curd + salad</p>
+            <p><span class="meal-time">4:30 PM:</span> Fruit + protein shake</p>
+            <p><span class="meal-time">7:30 PM:</span> Fish/paneer + quinoa/roti + vegetables</p>
+            <p><span class="meal-time">10:00 PM:</span> Casein protein or cottage cheese</p>
+          `;
+          tips = "Aim for 1.6-2.2g protein per kg body weight. Stay hydrated.";
+          workoutAdvice = "5-6 days/week split routine (push/pull/legs). Progressive overload.";
+        } 
+        else if (age > 35) {
+          plan = `
+            <p><span class="meal-time">7:00 AM:</span> Oats + eggs (2 whole + 2 whites) + nuts</p>
+            <p><span class="meal-time">10:00 AM:</span> Greek yogurt + berries</p>
+            <p><span class="meal-time">1:00 PM (Pre-workout):</span> Brown rice + chicken + vegetables</p>
+            <p><span class="meal-time">3:30 PM (Post-workout):</span> Protein shake + banana</p>
+            <p><span class="meal-time">6:00 PM:</span> Dal + roti + salad</p>
+            <p><span class="meal-time">8:30 PM:</span> Grilled fish/tofu + steamed vegetables</p>
+          `;
+          tips = "More recovery time needed. Focus on joint health and mobility.";
+          workoutAdvice = "4 days/week training with more rest days. Include yoga/stretching.";
+        }
+      } 
+      else {
+        // Regular diet plans based on health conditions
+        switch (condition) {
+          case "bp":
+            let bpModifications = "";
+            if (bpLevel === "mild") {
+              bpModifications = "Include potassium-rich foods like bananas and spinach. Reduce but don't eliminate salt completely.";
+            } else if (bpLevel === "moderate") {
+              bpModifications = "Strict sodium restriction (1500mg/day). Increase magnesium with nuts and seeds.";
+            } else if (bpLevel === "severe") {
+              bpModifications = "Very low sodium diet (1000mg/day). Focus on heart-healthy fats and frequent small meals.";
+            }
+            
+            plan = `
+              <p><span class="meal-time">8:00 AM:</span> Oats with skim milk + banana + flaxseeds</p>
+              <p><span class="meal-time">11:00 AM:</span> Unsalted nuts + fruits (berries or pear)</p>
+              <p><span class="meal-time">1:30 PM:</span> Brown rice + grilled fish + steamed spinach with garlic</p>
+              <p><span class="meal-time">4:30 PM:</span> Herbal tea (hibiscus) + roasted chana</p>
+              <p><span class="meal-time">7:30 PM:</span> Chapati + boiled veggies (no salt) + low-fat curd</p>
+              ${bpLevel === "severe" ? '<p><span class="meal-time">9:30 PM:</span> Warm milk with turmeric (golden milk)</p>' : ''}
+            `;
+            tips = `Limit sodium to ${bpLevel === "mild" ? "2000mg" : bpLevel === "moderate" ? "1500mg" : "1000mg"}/day. ${bpModifications}`;
+            lifestyleTips.push("Practice stress-reduction techniques daily", "Limit alcohol consumption", "Monitor your blood pressure regularly");
+            break;
+            
+          case "diabetic":
+            let diabeticModifications = "";
+            let snackAdjustment = "";
+            
+            if (diabetesType === "type1") {
+              diabeticModifications = "Focus on consistent carb intake to match insulin dosing. Include healthy fats for sustained energy.";
+              snackAdjustment = "<p><span class=\"meal-time\">3:30 PM:</span> Cheese cubes + cucumber slices (low carb snack)</p>";
+            } 
+            else if (diabetesType === "type2") {
+              diabeticModifications = "Emphasize weight management and insulin sensitivity improvement through high-fiber foods.";
+              snackAdjustment = "<p><span class=\"meal-time\">3:30 PM:</span> Handful of almonds + cinnamon tea</p>";
+            }
+            else if (diabetesType === "gestational") {
+              diabeticModifications = "Balance blood sugar while meeting increased pregnancy nutritional needs. Frequent small meals help.";
+              snackAdjustment = "<p><span class=\"meal-time\">3:30 PM:</span> Apple slices with peanut butter</p>";
+            }
+            else if (diabetesType === "prediabetic") {
+              diabeticModifications = "Focus on preventing progression to diabetes through weight loss and exercise.";
+              snackAdjustment = "<p><span class=\"meal-time\">3:30 PM:</span> Greek yogurt with chia seeds</p>";
+            }
+            
+            // Adjust plan based on sugar levels
+            let carbControl = "";
+            if (sugarLevel > 180) {
+              carbControl = "Limit carbs to 30g per meal. Focus on protein and non-starchy vegetables.";
+            } else if (sugarLevel > 140) {
+              carbControl = "Moderate carb intake (45g per meal). Combine with protein and fat.";
+            } else {
+              carbControl = "Balanced carb intake (60g per meal) with emphasis on low glycemic index foods.";
+            }
+            
+            plan = `
+              <p><span class="meal-time">8:00 AM:</span> ${sugarLevel > 180 ? "Vegetable omelette" : "Multigrain toast"} + boiled eggs + avocado</p>
+              <p><span class="meal-time">11:00 AM:</span> Greek yogurt + flaxseeds + ${sugarLevel > 140 ? "walnuts" : "berries"}</p>
+              <p><span class="meal-time">1:30 PM:</span> Quinoa + dal + green leafy salad + ${sugarLevel > 180 ? "grilled chicken" : "a small portion of brown rice"}</p>
+              ${snackAdjustment}
+              <p><span class="meal-time">7:30 PM:</span> Grilled chicken/tofu + ${sugarLevel > 140 ? "cauliflower rice" : "1 small roti"} + vegetables</p>
+              ${sugarLevel < 100 ? "<p><span class=\"meal-time\">9:30 PM:</span> Handful of nuts to prevent nighttime hypoglycemia</p>" : ""}
+            `;
+            tips = `${diabeticModifications} ${carbControl} Monitor blood sugar regularly.`;
+            lifestyleTips.push("Check blood sugar levels as recommended by your doctor", "Take short walks after meals to help control blood sugar", "Wear medical ID if you're on insulin");
+            break;
+            
+          case "pregnant":
+            // Age-specific pregnancy modifications
+            let pregnancyMods = "";
+            if (age < 25) {
+              pregnancyMods = "Higher calorie needs for young mothers. Include iron-rich foods to support growth.";
+            } else if (age >= 35) {
+              pregnancyMods = "Focus on nutrient density. Include folate-rich foods to support maternal health.";
+            }
+            
+            plan = `
+              <p><span class="meal-time">7:30 AM:</span> Whole grain bread + boiled egg + milk + ${age >= 35 ? "fortified cereal" : "peanut butter"}</p>
+              <p><span class="meal-time">10:30 AM:</span> Fruit + handful of nuts + ${age < 25 ? "hard-boiled egg" : "yogurt"}</p>
+              <p><span class="meal-time">1:00 PM:</span> Dal + brown rice + vegetables + curd + ${age >= 35 ? "beetroot salad" : "raita"}</p>
+              <p><span class="meal-time">4:00 PM:</span> Sprouts salad + lemon water + ${age < 25 ? "cheese cubes" : "hummus"}</p>
+              <p><span class="meal-time">7:00 PM:</span> Paneer/tofu + roti + salad + ${age >= 35 ? "fish (if non-vegetarian)" : "dal"}</p>
+              <p><span class="meal-time">9:30 PM:</span> Warm milk + dates + ${age < 25 ? "turmeric" : "cinnamon"}</p>
+            `;
+            tips = `Increase folic acid, iron, calcium, and protein intake. ${pregnancyMods} Small frequent meals help with nausea.`;
+            lifestyleTips.push("Take prenatal vitamins as prescribed", "Practice pregnancy-safe exercises like walking or swimming", "Avoid raw or undercooked foods", "Elevate your feet when resting to reduce swelling");
+            break;
+            
+          case "child":
+            // Age-specific modifications for teens
+            let teenMods = "";
+            if (age === 15) {
+              teenMods = "Focus on calcium for bone growth spurts. Include protein in every meal.";
+              plan = `
+                <p><span class="meal-time">7:30 AM:</span> Milk with oats + fruits + nuts</p>
+                <p><span class="meal-time">10:00 AM:</span> Peanut butter sandwich + juice</p>
+                <p><span class="meal-time">1:00 PM:</span> Rice + dal + mixed veggies + curd + cheese</p>
+                <p><span class="meal-time">4:30 PM:</span> Boiled eggs + fruit + milk</p>
+                <p><span class="meal-time">7:30 PM:</span> Chapati + paneer/chicken + salad</p>
+                <p><span class="meal-time">9:00 PM:</span> Banana smoothie with yogurt</p>
+              `;
+            } else if (age === 16) {
+              teenMods = "Increased calorie needs for active teens. Include healthy snacks for energy.";
+              plan = `
+                <p><span class="meal-time">7:30 AM:</span> Poha/upma with vegetables + milk</p>
+                <p><span class="meal-time">10:00 AM:</span> Cheese sandwich + fruit</p>
+                <p><span class="meal-time">1:00 PM:</span> Rice + fish/chicken + vegetables + curd</p>
+                <p><span class="meal-time">4:30 PM:</span> Sprouts chat + lemonade</p>
+                <p><span class="meal-time">7:30 PM:</span> Chapati + dal + vegetables</p>
+                <p><span class="meal-time">9:00 PM:</span> Milkshake with nuts</p>
+              `;
+            } else if (age === 17) {
+              teenMods = "Focus on nutrient-dense foods as growth continues. Include iron-rich foods.";
+              plan = `
+                <p><span class="meal-time">7:30 AM:</span> Egg sandwich + milk + banana</p>
+                <p><span class="meal-time">10:00 AM:</span> Trail mix + fruit juice</p>
+                <p><span class="meal-time">1:00 PM:</span> Biryani/pulao with raita + salad</p>
+                <p><span class="meal-time">4:30 PM:</span> Paneer wrap + smoothie</p>
+                <p><span class="meal-time">7:30 PM:</span> Roti + sabzi + dal</p>
+                <p><span class="meal-time">9:00 PM:</span> Cereal with milk</p>
+              `;
+            }
+            tips = `${teenMods} Limit junk food. Encourage physical activity.`;
+            lifestyleTips.push("Limit screen time to 2 hours/day for recreational use", "Get at least 1 hour of physical activity daily", "Establish regular sleep schedule", "Practice good hygiene especially during growth spurts");
+            break;
+            
+          case "elderly":
+            // Age-specific modifications for elderly
+            let elderlyMods = "";
+            if (age >= 70) {
+              elderlyMods = "Softer foods for easier digestion. Smaller, more frequent meals.";
+              plan = `
+                <p><span class="meal-time">8:00 AM:</span> Soft idli/dosa with sambar + herbal tea</p>
+                <p><span class="meal-time">10:30 AM:</span> Stewed fruits + yogurt</p>
+                <p><span class="meal-time">1:00 PM:</span> Khichdi with ghee + soft vegetables</p>
+                <p><span class="meal-time">4:00 PM:</span> Soup + soft bread</p>
+                <p><span class="meal-time">6:30 PM:</span> Mashed potatoes + scrambled eggs/paneer</p>
+                <p><span class="meal-time">8:30 PM:</span> Warm milk with turmeric</p>
+              `;
+            } else {
+              elderlyMods = "Focus on maintaining muscle mass with adequate protein. Include fiber for digestion.";
+              plan = `
+                <p><span class="meal-time">8:00 AM:</span> Poha with peanuts + herbal tea</p>
+                <p><span class="meal-time">11:00 AM:</span> Fruit + handful of walnuts</p>
+                <p><span class="meal-time">1:30 PM:</span> Soft-cooked rice + dal + vegetables</p>
+                <p><span class="meal-time">4:00 PM:</span> Soup + whole grain crackers</p>
+                <p><span class="meal-time">7:00 PM:</span> Roti + curd + vegetable soup</p>
+              `;
+            }
+            tips = `Ensure adequate protein to prevent muscle loss (40-50g/day). ${elderlyMods} Stay hydrated.`;
+            lifestyleTips.push("Include balance exercises to prevent falls", "Stay socially active for mental health", "Get regular health check-ups", "Practice brain exercises like puzzles or reading");
+            break;
+            
+          default: // Healthy users
+            // Age-specific general diet
+            if (age < 30) {
+              plan = `
+                <p><span class="meal-time">8:00 AM:</span> Whole grain toast + eggs + fruit + nuts</p>
+                <p><span class="meal-time">11:00 AM:</span> Yogurt with granola and berries</p>
+                <p><span class="meal-time">1:30 PM:</span> Brown rice + chicken/fish + vegetables + salad</p>
+                <p><span class="meal-time">4:30 PM:</span> Smoothie with protein (milk/yogurt + banana + peanut butter)</p>
+                <p><span class="meal-time">7:30 PM:</span> Quinoa salad with mixed vegetables + grilled protein</p>
+                <p><span class="meal-time">9:30 PM:</span> Handful of nuts if hungry</p>
+              `;
+              tips = "Focus on balanced nutrition. You can handle more variety in your diet.";
+            } else if (age >= 30 && age < 50) {
+              plan = `
+                <p><span class="meal-time">8:00 AM:</span> Oats with nuts, seeds and berries + boiled egg</p>
+                <p><span class="meal-time">11:00 AM:</span> Handful of almonds + apple</p>
+                <p><span class="meal-time">1:30 PM:</span> Roti + dal + sabzi + curd + salad</p>
+                <p><span class="meal-time">4:30 PM:</span> Green tea + makhana/roasted chana</p>
+                <p><span class="meal-time">7:30 PM:</span> Grilled fish/chicken + vegetables + small portion of rice/roti</p>
+              `;
+              tips = "Start focusing on metabolic health. Include antioxidants and maintain muscle mass.";
+            } else {
+              plan = `
+                <p><span class="meal-time">8:00 AM:</span> Idli/dosa with sambar + green tea + coconut chutney</p>
+                <p><span class="meal-time">11:00 AM:</span> Fruit bowl + handful of mixed nuts</p>
+                <p><span class="meal-time">1:30 PM:</span> Roti + sabzi + dal + curd + salad</p>
+                <p><span class="meal-time">4:30 PM:</span> Sprouts salad + lemon water + roasted makhana</p>
+                <p><span class="meal-time">7:30 PM:</span> Brown rice + vegetables + grilled fish/paneer</p>
+              `;
+              tips = "Maintain balanced diet with proteins, carbs and fats. Stay hydrated. Exercise regularly.";
+            }
+            lifestyleTips.unshift("Eat a rainbow of fruits and vegetables daily", "Include healthy fats like nuts, seeds and olive oil", "Limit processed foods and added sugars", "Stay physically active with both cardio and strength training");
+        }
+      }
+
+      // Filter out allergens from the plan
+      if (hasAllergies && allergies.length > 0) {
+        plan = filterAllergicFoods(plan, allergies);
+        tips += " NOTE: The plan has been modified to exclude your allergens.";
+      }
+
+      // Generate lifestyle tips HTML
+      let lifestyleTipsHTML = '';
+      if (lifestyleTips.length > 0) {
+        lifestyleTipsHTML = `<h3>Lifestyle Recommendations</h3><ul>`;
+        lifestyleTips.forEach(tip => {
+          lifestyleTipsHTML += `<li>${tip}</li>`;
+        });
+        lifestyleTipsHTML += `</ul>`;
+      }
+
+      const output = `
+        ${congrats}
+        <h2>Your BMI is ${bmi} (${status})</h2>
+        ${condition !== 'none' ? `<h3>Condition: ${condition === 'bp' ? 'Hypertension' : 
+                                condition === 'diabetic' ? 'Diabetes (' + diabetesType.replace('type', 'Type ') + ')' : 
+                                condition.charAt(0).toUpperCase() + condition.slice(1)}</h3>` : ''}
+        ${gym || buildBody ? `<h3>Fitness Goal: ${buildBody ? 'Muscle Building' : 'General Fitness'}</h3>` : ''}
+        ${hasAllergies && allergies.length > 0 ? `<h3>Allergies Considered: ${allergies.join(', ')}</h3>` : ''}
+        
+        <h3>Daily Diet Plan with Timings</h3>
+        ${plan}
+        
+        <h3>Nutritional Guidance</h3>
+        <p>${tips}</p>
+        
+        ${workoutAdvice ? `<h3>Workout Advice</h3><p>${workoutAdvice}</p>` : ''}
+        
+        ${lifestyleTipsHTML}
+        
+        ${hasAllergies && allergies.length > 0 ? 
+          `<div class="lifestyle-tip"><strong>Allergy Safety Tip:</strong> Always check food labels carefully and inform restaurants about your allergies.</div>` : ''}
+      `;
+
+      document.getElementById("result").innerHTML = output;
+    }
+  </script>
+<p style="margin-top: 40px;"><a href="privacy.html">Privacy Policy</a></p>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1467334443676990"
+     crossorigin="anonymous"></script>
+
+</body>
+</html>
+
+
